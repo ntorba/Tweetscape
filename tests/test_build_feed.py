@@ -28,26 +28,20 @@ def test_external_url_feed(db):
     """
     This test still requires hitting the api (althought we have saved data...)
     because it has to get the referenced tweet from the id.
-    """
-    tweets, influencers = db.get_cluster_tweets("Ethereum")
-    url_tweet_bank = filter_tweets_for_external_urls(tweets[:200])
-    assert (
-        len(url_tweet_bank) == 1
-    ), "should be one tweet with external url in this test db"
-    assert (
-        len(url_tweet_bank["1498577850688884736"]["external_urls"]) == 1
-    ), "should be one external_url in this tweet"
-    assert (
-        len(url_tweet_bank["1498577850688884736"]["vote_tweets"]) == 1
-    ), "should be one vote tweet"
 
-    external_url_feed = db.build_external_url_feed("Ethereum")
+    Using a preloaded external_url feed
+    """
+    external_url_feed = db.get_external_url_feed("Ethereum")
     for i in external_url_feed:
+        assert (
+            "description" in i
+        ), "feed must include a description key, even if value is None"
         assert len(i["external_urls"]) > 0, "must be at least one external_url for each"
-        assert isinstance(
-            i["tweet_link"], str
-        ), "tweet_link must be a str"  # TODO: make this a valid url check
-        assert isinstance(i["tweet_text"], str), "tweet text must be a str"
+        for i_tweet in i["tweets"]:
+            assert isinstance(
+                i_tweet["tweet_link"], str
+            ), "tweet_link must be a str"  # TODO: make this a valid url check
+            assert isinstance(i_tweet["tweet_text"], str), "tweet text must be a str"
 
 
 def test_get_clusters():

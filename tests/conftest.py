@@ -19,7 +19,7 @@ TEST_DATABASE_URI = "sqlite:///" + TESTDB_PATH
 
 @pytest.fixture(scope="session")
 def db():
-    return FeedDB("db/test_db.json")
+    return FeedDB("db/test_db2.json")
 
 
 @pytest.fixture(scope="session")
