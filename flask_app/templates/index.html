@@ -2,12 +2,13 @@
 {% block content %}
 
 <div class="mx-6">
-    <form class="my-2" role="form" method="get" action="{{ url_for('main.index') }}">
+    <p> Current Cluster Feed </p>
+    <form class="my-2" role="form" method="post" action="{{ url_for('main.index') }}">
         {{ form.csrf_token }}
         {{
         form.cluster(
-        class="bg-white text-black shadow-lg border-rounded",
-        placeholder="Email",
+        class="bg-white p-2 text-black text-xl font-bold shadow-lg border-rounded",
+        placeholder="Cluster",
         onchange="this.form.submit()"
         )
         }}
