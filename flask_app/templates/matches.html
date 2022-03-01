@@ -1,0 +1,54 @@
+{% extends "_base.html" %}
+{% block content %}
+
+<div>
+    <h1 class="text-2xl">Your Matches</h1>
+
+    {% if matches %}
+    <table class="border-2 border-gray-500 border-collapse  divide-y divide-gray-800 w-full">
+        <thead class="bg-black">
+            <tr class="">
+                <th class="px-6 text-left text-lg font-bold text-gray-500 uppercase tracking-wider">
+                    Name
+                </th>
+                <th class="px-6 text-left text-lg font-bold text-gray-500 uppercase tracking-wider ">
+                    Scientist Type
+                </th>
+                <th class=""></th>
+            </tr>
+        </thead>
+        <tbody class="bg-black divide-y divide-x divide-gray-800">
+            {% for match in matches %}
+            <tr class="">
+                <td class="px-6 py-4 text-left">
+                    <div class="ml-4">
+                        <div class="text-lg font-bold text-gray-300">{{ match.name }}</div>
+                    </div>
+                </td>
+                <td class="px-6 text-left  text-white">
+                    <p class="text-white"> {{ match.scientist_preferred_type }}</p>
+                </td>
+                <td class="px-6 ">
+                    <div data-controller="vote">
+                        <a href="{{ url_for('matches.match_page', matchid=match.id) }}"
+                            class="bg-green-800 text-green-100 hover:bg-green-400 rounded px-2 py-2">Edit
+                            Match</a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <a href="{{ url_for('matches.register_match') }}" class="bg-yellow-200"> Request First Match! </a>
+    {% endif %}
+
+    <div class="my-2">
+        <a class="bg-yellow-200 rounded m-2 p-2" href="{{ url_for('matches.register_match') }}">Request New Match</a>
+    </div>
+    <br />
+    <div class="my-2">
+        <a class="bg-yellow-200 rounded m-10 p-2" href="/logout">Logout</a>
+    </div>
+</div>
+{% endblock %}

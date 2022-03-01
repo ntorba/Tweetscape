@@ -1,0 +1,46 @@
+{% extends "_base.html" %}
+{% block content %}
+
+<h1 class="text-2xl">Match: {{ match.name }}</h1>
+
+<table class="border-2 border-gray-500 border-collapse  divide-y divide-gray-800 w-full">
+    <thead class="bg-black">
+        <tr class="">
+            <th class="px-6 text-left text-lg font-bold text-gray-500 uppercase tracking-wider">
+                Field
+            </th>
+            <th class="px-6 text-left text-lg font-bold text-gray-500 uppercase tracking-wider ">
+                Value
+            </th>
+        </tr>
+    </thead>
+    <tbody class="bg-black divide-y divide-x divide-gray-800">
+        {% for key, value in match.items() %}
+        <tr class="">
+            <td class="px-6 py-4 text-left">
+                <div class="ml-4">
+                    <div class="text-lg font-bold text-gray-300">{{ key }}</div>
+                </div>
+            </td>
+            <td class="px-6 text-left  text-white">
+                <p class="text-white"> {{ value }}</p>
+            </td>
+            <td class="px-6 ">
+                <div data-controller="vote">
+                    <a href="{{ url_for('matches.match_page', matchid=match.id) }}"
+                        class="bg-green-800 text-green-100 hover:bg-green-400 rounded px-2 py-2">TODO: Make these fields
+                        editable</a>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{{ url_for('matches.matches') }}" class="bg-yellow-200"> Go back to Matches Page </a>
+
+{% endblock %}
+
+<a class="bg-yellow-200 rounded p-2" href="{{ url_for('matches.register_match') }}">Add New Classroom!</a>
+<br>
+<p class="bg-yellow-200 p-2 rounded"><a href="/logout">Logout</a>

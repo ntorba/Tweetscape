@@ -1,0 +1,20 @@
+{% extends "_base.html" %}
+{% block content %}
+
+<h1 class="text-2xl">Hey, {{ current_user.name }}</h1>
+
+<h2 class="text-xl text-blue-300">Upcoming Events</h2>
+<p>TODO: Add events to db (events are when scientsits get matched with scientists at specific date</p>
+
+<br />
+{% if classrooms %}
+<h1 class="text-2xl underline">Class Rooms</h1>
+{% for classroom in classrooms %}
+<li><a href="classroom/{{ classroom.id }}">{{ classroom.name }}</a></li>
+{% endfor %}
+{% endif %}
+{% endblock %}
+
+<a class="bg-yellow-200 rounded p-2" href="{{ url_for('matches.register_match') }}">Add New Classroom!</a>
+<br>
+<p class="bg-yellow-200 p-2 rounded"><a href="/logout">Logout</a>

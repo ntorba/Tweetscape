@@ -1,0 +1,31 @@
+<!-- Navigation, originally from https://flowbite.com/docs/components/navbar/ -->
+
+{% set logged_out_navigation_bar = [
+('/', 'home', 'Home'),
+('/about/', 'about', 'About')
+] -%}
+
+{% set logged_in_navigation_bar = [
+('/matches/matches', 'matches', 'Matches'),
+('/profile', 'profile', 'Profile'),
+('/logout', 'logout', 'Logout')
+] %}
+
+{% set active_page = active_page|default('home') -%}
+
+<div class="bg-gray-300 shadow border-gray-200 px-2 sm:px-4 py-2.5 dark:bg-gray-800">
+  <div class="container flex flex-wrap justify-between items-center mx-auto">
+    <a href="{{ url_for('main.index') }}" class="flex">
+      <img class="object-contain w-12 h-8"
+        src="{{ url_for('static', filename='vendors/images/SAS_Logo_Clear_Background.png') }}">
+      <span class="self-center text-lg font-semibold whitespace-nowrap dark:text-white">TweetScape</span>
+    </a>
+    <nav class="w-full md:block md:w-auto" id="mobile-menu">
+      <ul id="navigation" class="flex flex-col mt-4 md:flex-row md:space-x-8 md:mt-0 md:text-sm md:font-medium">
+        {% for href, id, caption in logged_out_navigation_bar %}
+        <li {% if id==active_page %} class="active" {% endif %}><a href="{{ href|e }}">{{ caption|e }}</a>
+        </li>
+        {% endfor %}
+    </nav>
+  </div>
+</div>
