@@ -9,4 +9,4 @@ from wtforms.validators import DataRequired, Email, Length, EqualTo
 
 
 class ClusterSelectionForm(FlaskForm):
-    cluster = SelectField("Select Cluster", choices=["Python", "Ethereum", "Bitcoin"])
+    cluster = SelectField("Select Cluster", choices=["Ethereum", "Python", "Bitcoin"])
