@@ -1,13 +1,15 @@
 ### Twitter API Auth, loading creds and instantiating client
-from cmath import inf
 import os
+import concurrent.futures
 from pathlib import Path
 import requests
 import json
 import datetime
+from urllib.parse import urlsplit
 from bs4 import BeautifulSoup
 import re
 from dotenv import load_dotenv
+from tqdm import tqdm
 import tweepy
 from tweepy.errors import TooManyRequests
 
@@ -46,6 +48,11 @@ def get_clusters():
     return res.json()["clusters"]  # returns a list of dictionaries of clusters
 
 
+def url_get_host(url):
+    split_url = urlsplit(url)
+    return f"{split_url.scheme}://{split_url.hostname}"
+
+
 clusters = get_clusters()
 [i["name"] for i in clusters]
 
@@ -69,47 +76,43 @@ def get_cluster_influencers(
     return influencers
 
 
-def get_influencer_tweets(influencers):
-    usernames = []
-    for influencer in influencers:
-        usernames.append(influencer["social_account"]["social_account"]["screen_name"])
+def get_influencer_tweets(influencer):
     all_tweets = []
     NOW = datetime.datetime.now()
     NOW_24h = datetime.timedelta(hours=24)
     START_TIME = (datetime.datetime.now() - NOW_24h).isoformat("T")[:-3] + "Z"
-    for i_influencer in influencers:
-        i_username = i_influencer["social_account"]["social_account"]["screen_name"]
+    username = influencer["social_account"]["social_account"]["screen_name"]
+    try:
+        user = client.get_user(username=username)
+    except TooManyRequests as err:
+        print("hitting limit... breaking for now")
+        print(err)
+        return []
+    if user.data:
         try:
-            user = client.get_user(username=i_username)
+            user_tweets = client.get_users_tweets(
+                user.data.id,
+                tweet_fields=[
+                    "public_metrics",
+                    "created_at",
+                    "author_id",
+                    "referenced_tweets",
+                ],
+                start_time=START_TIME,
+            )
+            if user_tweets.data:
+                influencer["tweets"] = [i.data for i in user_tweets.data]
+                all_tweets.extend([i.data for i in user_tweets.data])
+            else:
+                influencer["tweets"] = []
         except TooManyRequests as err:
             print("hitting limit... breaking for now")
             print(err)
-            break
-        if user.data:
-            try:
-                user_tweets = client.get_users_tweets(
-                    user.data.id,
-                    tweet_fields=[
-                        "public_metrics",
-                        "created_at",
-                        "author_id",
-                        "referenced_tweets",
-                    ],
-                    start_time=START_TIME,
-                )
-            except TooManyRequests as err:
-                print("hitting limit... breaking for now")
-                print(err)
-                break
-        else:
-            print(f"no data found for user '{i_username}'")
-        i_influencer["last_tweet_pull"] = str(NOW)
-        if user_tweets.data:
-            i_influencer["tweets"] = [i.data for i in user_tweets.data]
-            all_tweets.extend([i.data for i in user_tweets.data])
-        else:
-            i_influencer["tweets"] = []
-    return influencers, all_tweets
+            return []
+    else:
+        print(f"no data found for user '{username}'")
+    influencer["last_tweet_pull"] = str(NOW)
+    return all_tweets
 
 
 def get_external_urls(tweet):
@@ -156,24 +159,68 @@ def filter_tweets_for_external_urls(tweets):
     quoted_tweet_bank = (
         {}
     )  # keys are tweet_id (this tweet is quoted), values are list of tweets by influencers that quoted the key tweet
-    for i_tweet in tweets:
-        if "referenced_tweets" in i_tweet:
-            # "referenced tweets" include quoted tweets, find them by checking "type" of referenced tweet (other types are "replied_to" and "retweeted")
-            for i_ref_tweet in i_tweet["referenced_tweets"]:
-                if i_ref_tweet["type"] == "quoted":
-                    external_urls = get_external_urls(
-                        client.get_tweet(i_ref_tweet["id"]).data
-                    )
-                    if len(external_urls):
-                        if i_ref_tweet["id"] not in quoted_tweet_bank:
-                            quoted_tweet_bank[i_ref_tweet["id"]] = {
-                                "external_urls": external_urls,
-                                "vote_tweets": [],
-                            }
-                        quoted_tweet_bank[i_ref_tweet["id"]]["vote_tweets"].append(
-                            i_tweet
-                        )
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        results = list(
+            tqdm(executor.map(check_quote_get_url, tweets), total=len(tweets))
+        )
+
+    for urls, ref_tweet_id, vote_tweet in results:
+        if urls:
+            if ref_tweet_id not in quoted_tweet_bank:
+                quoted_tweet_bank[ref_tweet_id] = {
+                    "external_urls": urls,
+                    "vote_tweets": [vote_tweet],
+                }
+            else:
+                quoted_tweet_bank[ref_tweet_id]["vote_tweets"].append(vote_tweet)
+    # for i_tweet in tweets:
+    #     if "referenced_tweets" in i_tweet:
+    #         # "referenced tweets" include quoted tweets, find them by checking "type" of referenced tweet (other types are "replied_to" and "retweeted")
+    #         for i_ref_tweet in i_tweet["referenced_tweets"]:
+    #             if i_ref_tweet["type"] == "quoted":
+    #                 external_urls = get_external_urls(
+    #                     client.get_tweet(i_ref_tweet["id"]).data
+    #                 )
+    #                 if len(external_urls):
+    #                     if i_ref_tweet["id"] not in quoted_tweet_bank:
+    #                         quoted_tweet_bank[i_ref_tweet["id"]] = {
+    #                             "external_urls": external_urls,
+    #                             "vote_tweets": [],
+    #                         }
+    #                     quoted_tweet_bank[i_ref_tweet["id"]]["vote_tweets"].append(
+    #                         i_tweet
+    #                     )
     return quoted_tweet_bank
+
+
+def check_quote_get_url(tweet):
+    """
+    If tweet quotes another tweet and that tweet has an external url, return the url, the quoted_tweet_id and the vote_tweet object, else return all Nones
+
+    tweet (dict): the data obj of tweepy.Tweet obj
+    """
+    urls = []
+    reference_tweet_id = None
+    vote_tweet = tweet
+    if "referenced_tweets" in tweet:
+        # "referenced tweets" include quoted tweets, find them by checking "type" of referenced tweet (other types are "replied_to" and "retweeted")
+        for i_ref_tweet in tweet["referenced_tweets"]:
+            if i_ref_tweet["type"] == "quoted":
+                external_urls = get_external_urls(
+                    client.get_tweet(i_ref_tweet["id"]).data
+                )
+                if external_urls:
+                    reference_tweet_id = i_ref_tweet["id"]
+                    vote_tweet = tweet
+                    return external_urls, reference_tweet_id, vote_tweet
+                else:
+                    return None, None, None
+            else:
+                return None, None, None
+
+    else:
+        return None, None, None
 
 
 class FeedDB:
@@ -202,7 +249,9 @@ class FeedDB:
         with open(db_fpath, "r") as f:
             db = json.load(f)
 
-    def save(self):
+    def save(self, fpath=None):
+        if fpath:
+            self.db_path = fpath
         with open(self.db_fpath, "w") as f:
             json.dump(self._db, f)
 
@@ -211,6 +260,9 @@ class FeedDB:
             self._db[cluster_name]["all_feed_tweets"],
             self._db[cluster_name]["influencers"],
         )
+
+    def get_external_url_feed(self, cluster_name):
+        return self._db[cluster_name]["external_url_feed"]
 
     def fetch_tweets(self, cluster_name, influencer_pages=range(1)):
         feed = Feed(cluster_name, influencer_pages=influencer_pages)
@@ -228,19 +280,32 @@ class FeedDB:
         self.external_url_feed = []
         for num, (i_tweet, i_tweet_data) in enumerate(url_tweet_bank.items()):
             # Quick code to grab the html description of the site
-            response = requests.get(i_tweet_data["external_urls"][0])
+            response = requests.get(
+                i_tweet_data["external_urls"][0], headers={"User-Agent": "XY"}
+            )
             soup = BeautifulSoup(response.text)
-            metas = soup.find_all("meta")
-            description = None
-            for meta in metas:
-                if "name" in meta.attrs and meta.attrs["name"] == "description":
-                    description = meta.attrs["content"]
-
-            self.external_url_feed.append({"description": description, "tweets": []})
+            description = (  # taken from https://stackoverflow.com/questions/22318095/get-meta-description-from-external-website/22318311
+                soup.find("meta", attrs={"name": "description"})
+                or soup.find("meta", attrs={"property": "description"})
+                or soup.find("meta", attrs={"property": "og:description"})
+                or soup.find("meta", attrs={"name": "description"})
+            )
+            if description:
+                description = description.attrs["content"]
+            title = soup.find("title")
+            if title:
+                title = title.text
+            self.external_url_feed.append(
+                {
+                    "title": title,
+                    "description": description,
+                    "external_urls": i_tweet_data["external_urls"],
+                    "tweets": [],
+                }
+            )
             for i in i_tweet_data["vote_tweets"]:
                 self.external_url_feed[-1]["tweets"].append(
                     {
-                        "external_urls": i_tweet_data["external_urls"],
                         "tweet_link": f"https://twitter.com/username/status/{i['id']}",
                         "tweet_text": i["text"],
                     }
@@ -268,6 +333,18 @@ class Feed:
         self.influencers = get_cluster_influencers(
             self.cluster_name, self.sort_direction, pages=self.influencer_pages
         )
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            results = list(
+                tqdm(
+                    executor.map(get_influencer_tweets, self.influencers),
+                    total=len(self.influencers),
+                )
+            )
 
-        self.influencers, self.all_feed_tweets = get_influencer_tweets(self.influencers)
-        return self.influencers, self.all_feed_tweets
+        self.all_feed_tweets = []
+        for i in results:
+            self.all_feed_tweets.extend(i)
+
+        # self.influencers, self.all_feed_tweets = get_influencer_tweets(self.influencers)
+        return self.all_feed_tweets
+        # return self.influencers, self.all_feed_tweets
