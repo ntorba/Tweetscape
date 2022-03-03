@@ -1,25 +1,32 @@
-<turbo-frame class="" id="current-feed" target="_top">
+<turbo-frame class="" id="current-feed">
     <div class="my-4">
-        {% for i_url in feed %}
+        {% for i_tweet_object in feed %}
         <div class="">
             <div class="bg-gray-200 py-4 px-2 border-r-2 border-l-2 border-b-2 border-gray-300 w-full">
                 <div>
                     <span class="text-lg text-bold text-black">
-                        <a href={{ i_url["external_urls"][0] }}>
-                            <b>{{ i_url["title"] }}</b>
+                        <a href={{ i_tweet_object["external_urls"][0] }}>
+                            <b>{{ i_tweet_object["title"] }}</b>
                         </a>
                     </span>
                     <span class="text-gray-500">
-                        <a href={{ url_get_host(i_url["external_urls"][0]) }}>
-                            ({{ url_get_host(i_url["external_urls"][0]) }})
+                        <a href={{ url_get_host(i_tweet_object["external_urls"][0]) }}>
+                            ({{ url_get_host(i_tweet_object["external_urls"][0]) }})
                         </a>
                     </span>
                 </div>
                 <div>
-                    <span class="text-purple-600">4 shares</span>
-                    <span class="text-black"> | 12h</span>
+                    <turbo-frame id="this-ref-tweet" target="{{ i_tweet_object['ref_tweet']['id'] }}">
+                        <span class="text-purple-600">
+                            <a href="{{ url_for('main.get_shares', ref_tweet_id= i_tweet_object['ref_tweet']['id']) }}">
+                                {{ len(i_tweet_object["tweets"]) }} shares
+                            </a>
+                        </span>
+                    </turbo-frame>
+                    <span class="text-black"> | {{ i_tweet_object["hours_since_shared"] }}h</span>
                 </div>
             </div>
+            <turbo-frame id="{{ i_tweet_object['ref_tweet']['id'] }}"></turbo-frame>
             {% endfor %}
         </div>
     </div>
