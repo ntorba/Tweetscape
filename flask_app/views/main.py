@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import os
 from flask import render_template, request, redirect, Blueprint, url_for, flash
 
 from .forms import ClusterSelectionForm
@@ -8,6 +9,25 @@ from ..tweet_db import TweetDB
 
 main_blueprint = Blueprint("main", __name__, template_folder="templates")
 
+from dotenv import load_dotenv
+import tweepy
+
+load_dotenv()
+
+consumer_key = os.environ["TWITTER_API_KEY"]
+consumer_secret = os.environ["TWITTER_API_KEY_SECRET"]
+
+access_token = os.environ["TWITTER_ACCESS_TOKEN"]
+access_token_secret = os.environ["TWITTER_ACCESS_TOKEN_SECRET"]
+
+## Twitter api v2 uses this client object instead 
+twitter_client=tweepy.Client(
+    consumer_key=consumer_key, 
+    consumer_secret=consumer_secret, 
+    access_token=access_token, 
+    access_token_secret=access_token_secret,
+    bearer_token=os.environ["TWITTER_API_BEARER_TOKEN"]
+)
 # db = FeedDB("db/test_db2.json")
 
 tweet_db = TweetDB("db/tweet_db_1-eth-python-bitcoin-external-quote-bank2.json")
@@ -64,6 +84,7 @@ def get_shares(ref_tweet_id, current_cluster):
         "shares.html",
         ref_tweet_id=ref_tweet_id,
         vote_tweets=ref_tweet_obj["vote_tweets"],
+        twitter_client=twitter_client
     )
 
 
