@@ -1,0 +1,93 @@
+{% extends "_base.html" %}
+{% block content %}
+<turbo-frame class="" id="current-feed" target="_top">
+    <div class="m-4">
+        <div class="">
+            <div class="bg-gray-200 py-4 px-2 border-r-2 border-l-2 border-b-2 border-gray-300 w-full">
+                <div>
+                    <span class="text-lg text-bold text-black">
+                        <a href="a-url.com">
+                            <b>Title this can be long or short or mid</b>
+                        </a>
+                    </span>
+                    <span class="text-gray-500">
+                        <a href="alink.com">
+                            (this.is.a.link.com)
+                        </a>
+                    </span>
+                </div>
+                <div>
+                    <span class="text-purple-600">
+                        <a href="a-url.com">
+                            4 shares
+                        </a>
+                    </span>
+                    <span class="text-black"> | 12h</span>
+                </div>
+            </div>
+            <turbo-frame id='10'></turbo-frame>
+        </div>
+        <div class="p-2 bg-gray-400 overflow-y-scroll max-h-48">
+            <div class="p-2 bg-white border-2 border-black hover:bg-purple-200">
+                <a class="block"
+                    href="https://twitter.com/twobitidiot/status/1498477506663493634?s=20&t=QfoRWmVWE3jVX9XhKOYBog">
+                    <div>
+                        <p><b>@username</p></b>
+                        <p>Here is the text from the tweet itself. this can be long and it can be short. There will be a
+                            url...</p>
+                    </div>
+                </a>
+            </div>
+            <div class="p-2 bg-white border-2 border-black hover:bg-purple-200">
+                <a href="https://twitter.com/twobitidiot/status/1498477506663493634?s=20&t=QfoRWmVWE3jVX9XhKOYBog">
+                    <div>
+                        <p><b><a>@username</a></p></b>
+                        <p>Here is the text from the tweet itself. this can be long and it can be short. There will be a
+                            url...</p>
+                    </div>
+                </a>
+            </div>
+            <div class="p-2 bg-white border-2 border-black hover:bg-purple-200">
+                <div>
+                    <p class="hover:text-blue-200"><b><a>@username</a></p></b>
+                    <p>Here is the text from the tweet itself. this can be long and it can be short. There will be a
+                        url...</p>
+                </div>
+            </div>
+            <div class="p-2 bg-white border-2 border-black hover:bg-purple-200">
+                <div>
+                    <p><b><a>@username</a></p></b>
+                    <p>Here is the text from the tweet itself. this can be long and it can be short. There will be a
+                        url...</p>
+                </div>
+            </div>
+        </div>
+        <div class="">
+            <div class="bg-gray-200 py-4 px-2 border-r-2 border-l-2 border-b-2 border-gray-300 w-full">
+                <div>
+                    <span class="text-lg text-bold text-black">
+                        <a href="a-url.com">
+                            <b>Title this can be long or short or mid</b>
+                        </a>
+                    </span>
+                    <span class="text-gray-500">
+                        <a href="alink.com">
+                            (this.is.a.link.com)
+                        </a>
+                    </span>
+                </div>
+                <div>
+                    <span class="text-purple-600">
+                        <a href="a-url.com">
+                            4 shares
+                        </a>
+                    </span>
+                    <span class="text-black"> | 12h</span>
+                </div>
+            </div>
+            <turbo-frame id='10'></turbo-frame>
+        </div>
+    </div>
+</turbo-frame>
+
+{% endblock %}
