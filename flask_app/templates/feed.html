@@ -18,7 +18,8 @@
                 <div>
                     <turbo-frame id="this-ref-tweet" target="{{ i_tweet_object['ref_tweet']['id'] }}">
                         <span class="text-purple-600">
-                            <a href="{{ url_for('main.get_shares', ref_tweet_id= i_tweet_object['ref_tweet']['id']) }}">
+                            <a
+                                href="{{ url_for('main.get_shares', ref_tweet_id=i_tweet_object['ref_tweet']['id'], current_cluster=form.data['cluster']) }}">
                                 {{ len(i_tweet_object["tweets"]) }} shares
                             </a>
                         </span>

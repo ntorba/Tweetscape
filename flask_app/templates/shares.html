@@ -2,8 +2,7 @@
     <div class="p-2 bg-gray-400 overflow-y-scroll max-h-48">
         {% for vote_tweet in vote_tweets %}
         <div class="p-2 bg-white border-2 border-black hover:bg-purple-200">
-            <a class="block"
-                href="https://twitter.com/twobitidiot/status/1498477506663493634?s=20&t=QfoRWmVWE3jVX9XhKOYBog">
+            <a class="block" href="{{ vote_tweet['tweet_link'] }}">
                 <div>
                     <p><b>{{ vote_tweet["author_id"] }}</p></b>
                     <p>{{ vote_tweet["text"] }}</p>

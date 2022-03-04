@@ -22,11 +22,10 @@ def borg_get_account_details(uid):
 @main_blueprint.route("/", methods=["GET", "POST"])
 def index():
     form = ClusterSelectionForm(request.form)
-    if form.validate_on_submit():
-        CURRENT_CLUSTER = form.data["cluster"]
-    else:
-        CURRENT_CLUSTER = "Ethereum"
-    external_url_feed = tweet_db._db[CURRENT_CLUSTER]["external_url_feed"]
+    current_cluster = form.data.get("cluster")
+    if not current_cluster:
+        current_cluster = "Ethereum"
+    external_url_feed = tweet_db._db[current_cluster]["external_url_feed"]
     external_url_feed = sorted(
         external_url_feed, key=lambda x: len(x["tweets"]), reverse=True
     )
@@ -51,10 +50,14 @@ def shares2():
     return render_template("shares-2.html")
 
 
-@main_blueprint.route("/get_shares/<ref_tweet_id>", methods=["GET"])
-def get_shares(ref_tweet_id):
+@main_blueprint.route(
+    "/get_shares/<ref_tweet_id>/", defaults={"current_cluster": "Ethereum"}
+)
+@main_blueprint.route("/get_shares/<ref_tweet_id>/<current_cluster>", methods=["GET"])
+def get_shares(ref_tweet_id, current_cluster):
     print(ref_tweet_id)
-    ref_tweet_obj = tweet_db._db[CURRENT_CLUSTER]["external_url_quote_tweet_bank"][
+
+    ref_tweet_obj = tweet_db._db[current_cluster]["external_url_quote_tweet_bank"][
         ref_tweet_id
     ]
     return render_template(
